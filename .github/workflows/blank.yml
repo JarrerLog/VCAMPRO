@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '11'
-          distribution: 'adoptopenjdk'  # You can use 'adoptopenjdk' or 'zulu', etc.
+          distribution: 'openjdk'  # Use OpenJDK as the distribution
 
       # Set up Android SDK
       - name: Set up Android SDK
