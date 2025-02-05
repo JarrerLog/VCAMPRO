@@ -23,14 +23,15 @@ jobs:
 
       # Set up Android SDK
       - name: Set up Android SDK
-        uses: hypriot/setup-android-sdk@v1
+        uses: android-actions/setup-android@v2
         with:
-          sdk-version: 'commandlinetools-linux-8512546_latest'
+          api-level: 30 # You can adjust this based on your target Android version
+          build-tools: 30.0.3 # Specify the build tools version
 
       # Accept licenses (to avoid build issues with licenses)
       - name: Accept Android SDK licenses
         run: |
-          echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
       # Build the Android app using Gradle Wrapper
       - name: Build Android App with Gradle
