@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v4
+
+      # Set up JDK (Java Development Kit) for Android build
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+
+      # Set up Android SDK
+      - name: Set up Android SDK
+        uses: hypriot/setup-android-sdk@v1
+        with:
+          sdk-version: 'commandlinetools-linux-8512546_latest'
+
+      # Accept licenses (to avoid build issues with licenses)
+      - name: Accept Android SDK licenses
+        run: |
+          echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
+      # Build the Android app using Gradle Wrapper
+      - name: Build Android App with Gradle
+        run: ./gradlew build
+
+      # (Optional) Run tests if you have any
+      - name: Run Android Tests
+        run: ./gradlew test
