@@ -1,5 +1,3 @@
-name: CI
-
 on:
   push:
     branches: [ "master" ]
@@ -20,24 +18,23 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '11'
-          distribution: 'openjdk'  # Use OpenJDK as the distribution
+          distribution: 'temurin'
 
       # Set up Android SDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
         with:
-          api-level: 30 # You can adjust this based on your target Android version
-          build-tools: 30.0.3 # Specify the build tools version
+          api-level: 30
+          build-tools: 30.0.3
 
-      # Accept licenses (to avoid build issues with licenses)
+      # Accept licenses
       - name: Accept Android SDK licenses
-        run: |
-          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+        run: yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
-      # Build the Android app using Gradle Wrapper
+      # Build the Android app
       - name: Build Android App with Gradle
         run: ./gradlew build
 
-      # (Optional) Run tests if you have any
+      # (Optional) Run tests
       - name: Run Android Tests
         run: ./gradlew test
