@@ -5,16 +5,18 @@ import android.media.MediaMetadataRetriever
 import java.io.FileOutputStream
 
 class Lib {
-    fun extractFramesFromVideo(videoPath: String): List<Bitmap> {
+    fun extractFramesFromVideo(videoPath: String?): List<Bitmap> {
         val retriever = MediaMetadataRetriever()
         val frameList = mutableListOf<Bitmap>()
         try {
-            retriever.setDataSource(videoPath)
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
-            val frameRate = 10000000
-            for (time in 0..duration step frameRate.toLong()) {
-                retriever.getFrameAtTime(time, MediaMetadataRetriever.OPTION_CLOSEST)?.let {
-                    frameList.add(it)
+            videoPath?.let {
+                retriever.setDataSource(it)
+                val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                val frameRate = 10000000
+
+                for (time in 0..duration step frameRate.toLong()) {
+                    val bitmap = retriever.getFrameAtTime(time, MediaMetadataRetriever.OPTION_CLOSEST)
+                    bitmap?.let { frameList.add(it) }
                 }
             }
         } catch (e: Exception) {

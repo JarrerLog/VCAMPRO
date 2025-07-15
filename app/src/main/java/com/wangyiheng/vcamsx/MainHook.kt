@@ -257,7 +257,9 @@ class MainHook : IXposedHookLoadPackage {
                         @Throws(Throwable::class)
                         override fun beforeHookedMethod(paramd: MethodHookParam) {
                             if (paramd.args[0] != null) {
-                                paramd.args[0] = listOf(c2_virtual_surface)
+                                c2_virtual_surface?.let { surface: Surface ->
+                                    paramd.args[0] = listOf(surface)
+                                }
                             }
                         }
                     })
@@ -269,14 +271,16 @@ class MainHook : IXposedHookLoadPackage {
                                     super.beforeHookedMethod(param)
                                     if (param.args[0] != null) {
                                         sessionConfiguration = param.args[0] as SessionConfiguration
-                                        outputConfiguration = OutputConfiguration(c2_virtual_surface)
-                                        fake_sessionConfiguration = SessionConfiguration(
-                                            sessionConfiguration!!.getSessionType(),
-                                            Arrays.asList<OutputConfiguration>(outputConfiguration),
-                                            sessionConfiguration!!.getExecutor(),
-                                            sessionConfiguration!!.getStateCallback()
-                                        )
-                                        param.args[0] = fake_sessionConfiguration
+                                        c2_virtual_surface?.let { surface: Surface ->
+                                            outputConfiguration = OutputConfiguration(surface)
+                                            fake_sessionConfiguration = SessionConfiguration(
+                                                sessionConfiguration!!.getSessionType(),
+                                                java.util.Arrays.asList<OutputConfiguration>(outputConfiguration),
+                                                sessionConfiguration!!.getExecutor(),
+                                                sessionConfiguration!!.getStateCallback()
+                                            )
+                                            param.args[0] = fake_sessionConfiguration
+                                        }
                                     }
                                 }
                             })
