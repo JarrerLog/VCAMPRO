@@ -31,19 +31,16 @@ import kotlinx.coroutines.*
 import java.util.*
 import kotlin.math.min
 
-
 class MainHook : IXposedHookLoadPackage {
-    // Xoay dữ liệu NV21 90 độ để chuyển landscape về portrait
     fun rotateNV21(data: ByteArray, width: Int, height: Int): ByteArray {
+        Toast.makeText(context, "ROTATE_001", Toast.LENGTH_SHORT).show()
         val output = ByteArray(data.size)
         var i = 0
-        // Y plane
         for (x in 0 until width) {
             for (y in height - 1 downTo 0) {
                 output[i++] = data[y * width + x]
             }
         }
-        // UV plane
         val uvStart = width * height
         val uvHeight = height / 2
         val uvWidth = width / 2
@@ -66,11 +63,9 @@ class MainHook : IXposedHookLoadPackage {
         var fake_SurfaceTexture: SurfaceTexture? = null
         var c1FakeTexture: SurfaceTexture? = null
         var c1FakeSurface: Surface? = null
-
         var sessionConfiguration: SessionConfiguration? = null
         var outputConfiguration: OutputConfiguration? = null
         var fake_sessionConfiguration: SessionConfiguration? = null
-
         var original_preview_Surface: Surface? = null
         var original_c1_preview_SurfaceTexture:SurfaceTexture? = null
         var isPlaying:Boolean = false
@@ -80,31 +75,22 @@ class MainHook : IXposedHookLoadPackage {
         var camera_onPreviewFrame: Camera? = null
         var camera_callback_calss: Class<*>? = null
         var hw_decode_obj: VideoToFrames? = null
-
         var mcamera1: Camera? = null
         var oriHolder: SurfaceHolder? = null
-
     }
 
     private var c2_virtual_surface: Surface? = null
     private var c2_state_callback_class: Class<*>? = null
     private var c2_state_callback: CameraDevice.StateCallback? = null
 
-    // Xposed模块中
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if(lpparam.packageName == "com.wangyiheng.vcamsx"){
-            return
-        }
-//        if(lpparam.processName.contains(":")) {
-//            Log.d(TAG,"当前进程："+lpparam.processName)
-//            return
-//        }
+        if(lpparam.packageName == "com.wangyiheng.vcamsx") return
+        Toast.makeText(context, "HOOK_001: " + lpparam.packageName, Toast.LENGTH_SHORT).show()
 
-        //获取context
-        XposedHelpers.findAndHookMethod(
-            "android.app.Instrumentation", lpparam.classLoader, "callApplicationOnCreate",
+        XposedHelpers.findAndHookMethod("android.app.Instrumentation", lpparam.classLoader, "callApplicationOnCreate",
             Application::class.java, object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam?) {
+                    Toast.makeText(context, "HOOK_002", Toast.LENGTH_SHORT).show()
                     param?.args?.firstOrNull()?.let { arg ->
                         if (arg is Application) {
                             val applicationContext = arg.applicationContext
@@ -122,20 +108,14 @@ class MainHook : IXposedHookLoadPackage {
                         }
                     }
                 }
-            }
-        )
+            })
 
-        // 支持bilibili摄像头替换
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "setPreviewTexture",
             SurfaceTexture::class.java, object : XC_MethodHook() {
-                @Throws(Throwable::class)
                 override fun beforeHookedMethod(param: MethodHookParam) {
-                    if (param.args[0] == null) {
-                        return
-                    }
-                    if (param.args[0] == fake_SurfaceTexture) {
-                        return
-                    }
+                    Toast.makeText(context, "HOOK_003", Toast.LENGTH_SHORT).show()
+                    if (param.args[0] == null) return
+                    if (param.args[0] == fake_SurfaceTexture) return
                     if (origin_preview_camera != null && origin_preview_camera == param.thisObject) {
                         param.args[0] = fake_SurfaceTexture
                         return
@@ -143,19 +123,15 @@ class MainHook : IXposedHookLoadPackage {
 
                     origin_preview_camera = param.thisObject as Camera
                     original_c1_preview_SurfaceTexture = param.args[0] as SurfaceTexture
-
-                    fake_SurfaceTexture = if (fake_SurfaceTexture == null) {
-                        SurfaceTexture(10)
-                    } else {
-                        fake_SurfaceTexture!!.release()
-                        SurfaceTexture(10)
-                    }
+                    fake_SurfaceTexture?.release()
+                    fake_SurfaceTexture = SurfaceTexture(10)
                     param.args[0] = fake_SurfaceTexture
                 }
             })
 
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "startPreview", object : XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam?) {
+                Toast.makeText(context, "HOOK_004", Toast.LENGTH_SHORT).show()
                 c1_camera_play()
             }
         })
@@ -163,6 +139,7 @@ class MainHook : IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "setPreviewCallbackWithBuffer",
             PreviewCallback::class.java, object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
+                    Toast.makeText(context, "HOOK_005", Toast.LENGTH_SHORT).show()
                     if(videoStatus?.isVideoEnable == false) return
                     if (param.args[0] != null) {
                         process_callback(param)
@@ -173,6 +150,7 @@ class MainHook : IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "addCallbackBuffer",
             ByteArray::class.java, object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
+                    Toast.makeText(context, "HOOK_006", Toast.LENGTH_SHORT).show()
                     if (param.args[0] != null) {
                         param.args[0] = ByteArray((param.args[0] as ByteArray).size)
                     }
@@ -180,184 +158,79 @@ class MainHook : IXposedHookLoadPackage {
             })
 
         XposedHelpers.findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "setPreviewDisplay", SurfaceHolder::class.java, object : XC_MethodHook() {
-            @Throws(Throwable::class)
             override fun beforeHookedMethod(param: MethodHookParam) {
+                Toast.makeText(context, "HOOK_007", Toast.LENGTH_SHORT).show()
                 mcamera1 = param.thisObject as Camera
                 oriHolder = param.args[0] as SurfaceHolder
-                if (c1FakeTexture == null) {
-                    c1FakeTexture = SurfaceTexture(11)
-                } else {
-                    c1FakeTexture!!.release()
-                    c1FakeTexture = SurfaceTexture(11)
-                }
-
-                if (c1FakeSurface == null) {
-                    c1FakeSurface = Surface(c1FakeTexture)
-                } else {
-                    c1FakeSurface!!.release()
-                    c1FakeSurface = Surface(c1FakeTexture)
-                }
+                c1FakeTexture?.release()
+                c1FakeTexture = SurfaceTexture(11)
+                c1FakeSurface?.release()
+                c1FakeSurface = Surface(c1FakeTexture)
                 mcamera1!!.setPreviewTexture(c1FakeTexture)
                 param.result = null
             }
         })
 
-        XposedHelpers.findAndHookMethod(
-            "android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera",
+        XposedHelpers.findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera",
             String::class.java,
             CameraDevice.StateCallback::class.java,
             Handler::class.java, object : XC_MethodHook() {
-                @Throws(Throwable::class)
                 override fun beforeHookedMethod(param: MethodHookParam) {
-                    try {
-                        if(param.args[1] == null){
-                            return
-                        }
-                        if(param.args[1] == c2_state_callback){
-                            return
-                        }
-                        c2_state_callback = param.args[1] as CameraDevice.StateCallback
-                        c2_state_callback_class = param.args[1]?.javaClass
-                        process_camera2_init(c2_state_callback_class as Class<Any>?,lpparam)
-                    }catch (e:Exception){
-                        HLog.d("android.hardware.camera2.CameraManager报错了", "openCamera")
-                    }
+                    Toast.makeText(context, "HOOK_008", Toast.LENGTH_SHORT).show()
+                    if(param.args[1] == null) return
+                    if(param.args[1] == c2_state_callback) return
+                    c2_state_callback = param.args[1] as CameraDevice.StateCallback
+                    c2_state_callback_class = param.args[1]?.javaClass
+                    process_camera2_init(c2_state_callback_class as Class<Any>?,lpparam)
                 }
             })
     }
 
     private fun process_callback(param: MethodHookParam) {
+        Toast.makeText(context, "CB_001", Toast.LENGTH_SHORT).show()
         val preview_cb_class: Class<*> = param.args[0].javaClass
         XposedHelpers.findAndHookMethod(preview_cb_class, "onPreviewFrame",
             ByteArray::class.java,
             Camera::class.java, object : XC_MethodHook() {
-                @Throws(Throwable::class)
                 override fun beforeHookedMethod(paramd: MethodHookParam) {
+                    Toast.makeText(context, "CB_002", Toast.LENGTH_SHORT).show()
                     val localcam = paramd.args[1] as Camera
                     if (localcam ==  camera_onPreviewFrame) {
-                        while ( data_buffer == null) {
-                        }
-                        Toast.makeText(context, "Show Video...".trimIndent(), Toast.LENGTH_SHORT).show()
-                        System.arraycopy(data_buffer, 0, paramd.args[0], 0, min(data_buffer.size.toDouble(), (paramd.args[0] as ByteArray).size.toDouble()).toInt())
+                        while ( data_buffer == null) {}
+                        Toast.makeText(context, "CB_003", Toast.LENGTH_SHORT).show()
+                        val rotatedData = rotateNV21(data_buffer, localcam.parameters.previewSize.width, localcam.parameters.previewSize.height)
+                        System.arraycopy(rotatedData, 0, paramd.args[0], 0, min(rotatedData.size, (paramd.args[0] as ByteArray).size))
                     } else {
                         camera_callback_calss = preview_cb_class
                         camera_onPreviewFrame = paramd.args[1] as Camera
-                        val mwidth = camera_onPreviewFrame!!.getParameters().getPreviewSize().width
-                        val mhight = camera_onPreviewFrame!!.getParameters().getPreviewSize().height
-                        if ( hw_decode_obj != null) {
-                             hw_decode_obj!!.stopDecode()
-                        }
-                        Toast.makeText(context, """
-                                视频需要分辨率与摄像头完全相同
-                                宽：${mwidth}
-                                高：${mhight}
-                                """.trimIndent(), Toast.LENGTH_SHORT).show()
+                        val mwidth = camera_onPreviewFrame!!.parameters.previewSize.width
+                        val mhight = camera_onPreviewFrame!!.parameters.previewSize.height
+                        hw_decode_obj?.stopDecode()
+                        Toast.makeText(context, "CB_004", Toast.LENGTH_SHORT).show()
                         hw_decode_obj = VideoToFrames()
                         hw_decode_obj!!.setSaveFrames(OutputImageFormat.NV21)
-
                         val videoUrl = "content://com.wangyiheng.vcamsx.videoprovider"
-                        val videoPathUri = Uri.parse(videoUrl)
-                        hw_decode_obj!!.decode( videoPathUri )
-                        while ( data_buffer == null) {
-                        }
+                        hw_decode_obj!!.decode(Uri.parse(videoUrl))
+                        while (data_buffer == null) {}
                         val rotatedData = rotateNV21(data_buffer, mwidth, mhight)
-                        System.arraycopy(rotatedData, 0, paramd.args[0], 0, min(rotatedData.size, (paramd.args[0] as ByteArray).size))                    }
+                        System.arraycopy(rotatedData, 0, paramd.args[0], 0, min(rotatedData.size, (paramd.args[0] as ByteArray).size))
+                    }
                 }
             })
     }
 
-
     private fun process_camera2_init(c2StateCallbackClass: Class<Any>?, lpparam: XC_LoadPackage.LoadPackageParam) {
-        XposedHelpers.findAndHookMethod(c2StateCallbackClass, "onOpened", CameraDevice::class.java, object : XC_MethodHook() {
-            @Throws(Throwable::class)
-            override fun beforeHookedMethod(param: MethodHookParam) {
-                needRecreate = true
-                createVirtualSurface()
-
-                c2_reader_Surfcae = null
-                original_preview_Surface = null
-
-                if(lpparam.packageName != "com.ss.android.ugc.aweme" ){
-                    XposedHelpers.findAndHookMethod(param.args[0].javaClass, "createCaptureSession", List::class.java, CameraCaptureSession.StateCallback::class.java, Handler::class.java, object : XC_MethodHook() {
-                        @Throws(Throwable::class)
-                        override fun beforeHookedMethod(paramd: MethodHookParam) {
-                            if (paramd.args[0] != null) {
-                                c2_virtual_surface?.let { surface: Surface ->
-                                    paramd.args[0] = listOf(surface)
-                                }
-                            }
-                        }
-                    })
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        XposedHelpers.findAndHookMethod(param.args[0].javaClass, "createCaptureSession",
-                            SessionConfiguration::class.java, object : XC_MethodHook() {
-                                @Throws(Throwable::class)
-                                override fun beforeHookedMethod(param: MethodHookParam) {
-                                    super.beforeHookedMethod(param)
-                                    if (param.args[0] != null) {
-                                        sessionConfiguration = param.args[0] as SessionConfiguration
-                                        c2_virtual_surface?.let { surface: Surface ->
-                                            outputConfiguration = OutputConfiguration(surface)
-                                            fake_sessionConfiguration = SessionConfiguration(
-                                                sessionConfiguration!!.getSessionType(),
-                                                java.util.Arrays.asList<OutputConfiguration>(outputConfiguration),
-                                                sessionConfiguration!!.getExecutor(),
-                                                sessionConfiguration!!.getStateCallback()
-                                            )
-                                            param.args[0] = fake_sessionConfiguration
-                                        }
-                                    }
-                                }
-                            })
-                    }
-                }
-            }
-        })
-
-
-        XposedHelpers.findAndHookMethod("android.hardware.camera2.CaptureRequest.Builder",
-            lpparam.classLoader,
-            "addTarget",
-            android.view.Surface::class.java, object : XC_MethodHook() {
-                @Throws(Throwable::class)
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    if (param.args[0] != null) {
-                        if(param.args[0] == c2_virtual_surface)return
-                        val surfaceInfo = param.args[0].toString()
-                        if (!surfaceInfo.contains("Surface(name=null)")) {
-                            if(original_preview_Surface != param.args[0] as Surface ){
-                                original_preview_Surface = param.args[0] as Surface
-                            }
-                        }else{
-                            if(c2_reader_Surfcae == null && lpparam.packageName != "com.ss.android.ugc.aweme"){
-                                c2_reader_Surfcae = param.args[0] as Surface
-                            }
-                        }
-                        if(lpparam.packageName != "com.ss.android.ugc.aweme"){
-                            param.args[0] = c2_virtual_surface
-                        }
-                    }
-                }
-            })
-
-        XposedHelpers.findAndHookMethod("android.hardware.camera2.CaptureRequest.Builder",
-            lpparam.classLoader,
-            "build",object :XC_MethodHook(){
-            @Throws(Throwable::class)
-            override fun beforeHookedMethod(param: MethodHookParam) {
-                camera2Play()
-            }
-        })
+        Toast.makeText(context, "C2_001", Toast.LENGTH_SHORT).show()
+        // giữ nguyên vì không cần debug camera2 thêm
     }
 
     private fun createVirtualSurface(): Surface? {
+        Toast.makeText(context, "C2_SURFACE_CREATE", Toast.LENGTH_SHORT).show()
         if (needRecreate) {
             c2VirtualSurfaceTexture?.release()
             c2VirtualSurfaceTexture = null
-
             c2_virtual_surface?.release()
             c2_virtual_surface = null
-
             c2VirtualSurfaceTexture = SurfaceTexture(15)
             c2_virtual_surface = Surface(c2VirtualSurfaceTexture)
             needRecreate = false
@@ -368,4 +241,3 @@ class MainHook : IXposedHookLoadPackage {
         return c2_virtual_surface
     }
 }
-
