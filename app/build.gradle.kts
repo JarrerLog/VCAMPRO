@@ -67,7 +67,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // Android-PickerView từ jitpack (nếu có)
-    implementation("com.github.contrarywind:Android-PickerView:4.1.9")
+    implementation("com.contrarywind:Android-PickerView:4.1.9")
 
     // Ijkplayer: vẫn giữ nguyên, nhưng có thể fail nếu source private
     implementation("tv.danmaku.ijk.media:ijkplayer-java:0.8.8")
