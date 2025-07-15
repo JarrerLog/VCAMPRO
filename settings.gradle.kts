@@ -15,7 +15,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         maven("https://jitpack.io")                        // 🟢 Thêm jitpack để dùng lib từ GitHub
         maven("https://api.xposed.info/")                   // Xposed
-        maven("https://maven.pkg.github.com/GCX-HCI/tray")  // Repo private cần token (cẩn thận 401)
+        // Repo private cần token (cẩn thận 401)
     }
 }
 
