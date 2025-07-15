@@ -15,7 +15,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         maven("https://jitpack.io")                        // 🟢 Thêm jitpack để dùng lib từ GitHub
         maven("https://api.xposed.info/")                   // Xposed
-        mavem("https://artifactory.appodeal.com/appodeal-public/") // Repo private cần token (cẩn thận 401)
+        maven("https://artifactory.appodeal.com/appodeal-public/") // Repo private cần token (cẩn thận 401)
     }
 }
 
