@@ -12,8 +12,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://api.xposed.info/")
-        jcenter()
-
+        maven ("https://maven.pkg.github.com/GCX-HCI/tray" )
     }
 }
 
