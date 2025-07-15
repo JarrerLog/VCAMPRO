@@ -3,19 +3,22 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
-        gradlePluginPortal()
         mavenCentral()
-        maven("https://api.xposed.info/")
-        maven ("https://maven.pkg.github.com/GCX-HCI/tray" )
+        gradlePluginPortal()
+        maven("https://jitpack.io")                        // 🟢 Thêm jitpack để dùng lib từ GitHub
+        maven("https://api.xposed.info/")                   // Xposed
+        maven("https://maven.pkg.github.com/GCX-HCI/tray")  // Repo private cần token (cẩn thận 401)
     }
 }
 
 rootProject.name = "VCAMSX"
+
 include(":app")
- 
