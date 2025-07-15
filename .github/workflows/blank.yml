@@ -3,7 +3,7 @@ name: Build & Release Android App
 on:
   push:
     tags:
-      - 'v*'   # trigger on version tags like v1.0.0
+      - 'v*'       # e.g. v1.0.0
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,10 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      - name: Build Android App with Gradle
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Release APK
         run: ./gradlew assembleRelease
 
       - name: Upload APK as artifact
@@ -48,3 +51,5 @@ jobs:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
