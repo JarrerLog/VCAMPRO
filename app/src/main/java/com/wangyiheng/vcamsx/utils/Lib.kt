@@ -10,12 +10,12 @@ class Lib {
         val frameList = mutableListOf<Bitmap>()
         try {
             retriever.setDataSource(videoPath)
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
             val frameRate = 10000000
-
             for (time in 0..duration step frameRate.toLong()) {
-                val bitmap = retriever.getFrameAtTime(time, MediaMetadataRetriever.OPTION_CLOSEST)
-                bitmap?.let { frameList.add(it) }
+                retriever.getFrameAtTime(time, MediaMetadataRetriever.OPTION_CLOSEST)?.let {
+                    frameList.add(it)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
