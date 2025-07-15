@@ -12,6 +12,8 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://api.xposed.info/")
+        jcenter()
+
     }
 }
 
