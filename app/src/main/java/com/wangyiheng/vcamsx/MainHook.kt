@@ -37,11 +37,13 @@ class MainHook : IXposedHookLoadPackage {
     fun rotateNV21(data: ByteArray, width: Int, height: Int): ByteArray {
         val output = ByteArray(data.size)
         var i = 0
+        // Y plane
         for (x in 0 until width) {
             for (y in height - 1 downTo 0) {
                 output[i++] = data[y * width + x]
             }
         }
+        // UV plane
         val uvStart = width * height
         val uvHeight = height / 2
         val uvWidth = width / 2
@@ -235,6 +237,7 @@ class MainHook : IXposedHookLoadPackage {
                     if (localcam ==  camera_onPreviewFrame) {
                         while ( data_buffer == null) {
                         }
+                        Toast.makeText(context, "Show Video...".trimIndent(), Toast.LENGTH_SHORT).show()
                         System.arraycopy(data_buffer, 0, paramd.args[0], 0, min(data_buffer.size.toDouble(), (paramd.args[0] as ByteArray).size.toDouble()).toInt())
                     } else {
                         camera_callback_calss = preview_cb_class
