@@ -1,8 +1,9 @@
+name: Build & Release Android App
+
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - 'v*'   # trigger on version tags like v1.0.0
   workflow_dispatch:
 
 jobs:
@@ -10,31 +11,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repository
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Set up JDK (Java Development Kit) for Android build
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
 
-      # Set up Android SDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
-        with:
-          api-level: 30
-          build-tools: 30.0.3
 
-      # Accept licenses
+      - name: Install SDK packages
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-30" \
+            "build-tools;30.0.3" \
+            "platform-tools"
+
       - name: Accept Android SDK licenses
-        run: yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      # Build the Android app
       - name: Build Android App with Gradle
-        run: ./gradlew build
+        run: ./gradlew assembleRelease
 
-      # (Optional) Run tests
-      - name: Run Android Tests
-        run: ./gradlew test
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: app/build/outputs/apk/release/app-release.apk
