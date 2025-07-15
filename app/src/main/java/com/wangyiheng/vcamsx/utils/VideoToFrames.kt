@@ -201,4 +201,77 @@ class VideoToFrames : Runnable {
         }
         return yuv
     }
+    private fun getDataFromImage(image: Image): ByteArray {
+
+        logImageFormat(image)
+        if (!isImageFormatSupported(image)) {
+            throw RuntimeException("can't convert Image to byte array, format ${image.format}")
+        }
+
+        val crop = image.cropRect
+        val width = crop.width()
+        val height = crop.height()
+        val planes = image.planes
+        val pixelFormatBits = ImageFormat.getBitsPerPixel(image.format)
+        val data = ByteArray(width * height * pixelFormatBits / 8)
+        val rowData = ByteArray(planes[0].rowStride)
+
+        fun copyPlaneData(planeIndex: Int, buffer: ByteBuffer, rowStride: Int, pixelStride: Int, width: Int, height: Int, channelOffset: Int, outputStride: Int) {
+            var outputOffset = channelOffset
+            buffer.position(rowStride * (crop.top / 2) + pixelStride * (crop.left / 2))
+            for (row in 0 until height) {
+                val length = if (pixelStride == 1 && outputStride == 1) {
+                    width
+                } else {
+                    (width - 1) * pixelStride + 1
+                }
+                if (length == rowStride && outputStride == 1) {
+                    buffer.get(data, outputOffset, length)
+                    outputOffset += length
+                } else {
+                    buffer.get(rowData, 0, length)
+                    for (col in 0 until width) {
+                        data[outputOffset] = rowData[col * pixelStride]
+                        outputOffset += outputStride
+                    }
+                }
+                if (row < height - 1) {
+                    buffer.position(buffer.position() + rowStride - length)
+                }
+            }
+        }
+
+        var channelOffset = 0
+        val uvHeight = height / 2
+        val uvWidth = width / 2
+
+        // Y Plane
+        copyPlaneData(0, planes[0].buffer, planes[0].rowStride, planes[0].pixelStride, width, height, channelOffset, 1)
+        channelOffset += width * height
+
+
+        copyPlaneData(1, planes[2].buffer, planes[2].rowStride, planes[2].pixelStride, uvWidth, uvHeight, channelOffset, 2)
+        copyPlaneData(2, planes[1].buffer, planes[1].rowStride, planes[1].pixelStride, uvWidth, uvHeight, channelOffset + 1, 2)
+
+
+        return data
+    }
+
+
+
+    private fun isImageFormatSupported(image: Image): Boolean {
+        val format = image.format
+        Log.d("vcamsx", "format$format")
+        return when (format) {
+            ImageFormat.YUV_420_888, ImageFormat.NV21, ImageFormat.YV12 -> true
+            else -> false
+        }
+    }
+}
+enum class OutputImageFormat(val friendlyName: String) {
+    I420("I420"),
+    NV21("NV21"),
+    JPEG("JPEG");
+
+    override fun toString() = friendlyName
 }
