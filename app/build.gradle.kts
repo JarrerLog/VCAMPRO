@@ -50,19 +50,6 @@ android {
     }
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven(url = "https://jitpack.io")
-    // Nếu vẫn cần GitHub Packages, thêm:
-    // maven {
-    //     url = uri("https://maven.pkg.github.com/GCX-HCI/tray")
-    //     credentials {
-    //         username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-    //         password = project.findProperty("gpr.key") ?: System.getenv("GH_PACKAGES_TOKEN")
-    //     }
-    // }
-}
 
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
