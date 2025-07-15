@@ -32,25 +32,30 @@ import java.util.*
 import kotlin.math.min
 
 class MainHook : IXposedHookLoadPackage {
+    // Xoay NV21 90 độ, giữ đúng tỉ lệ, không kéo dài hình
     fun rotateNV21(data: ByteArray, width: Int, height: Int): ByteArray {
         Toast.makeText(context, "ROTATE_001", Toast.LENGTH_SHORT).show()
         val output = ByteArray(data.size)
+        // Y
         var i = 0
         for (x in 0 until width) {
             for (y in height - 1 downTo 0) {
                 output[i++] = data[y * width + x]
             }
         }
+        // UV
         val uvStart = width * height
         val uvHeight = height / 2
         val uvWidth = width / 2
+        // Xoay UV 90 độ
         for (x in 0 until uvWidth) {
             for (y in uvHeight - 1 downTo 0) {
-                val index = uvStart + y * width + x * 2
-                output[i++] = data[index]
-                output[i++] = data[index + 1]
+                val srcIndex = uvStart + y * width + x * 2
+                output[i++] = data[srcIndex]
+                output[i++] = data[srcIndex + 1]
             }
         }
+        // Đổi width/height khi trả về (nếu cần dùng tiếp)
         return output
     }
 
