@@ -90,7 +90,7 @@ class MainHook : IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         if(lpparam.packageName == "com.wangyiheng.vcamsx") return
-        Toast.makeText(context, "HOOK_001: " + (lpparam.packageName ?: "null"), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "HOOK_001 Load Package ", Toast.LENGTH_SHORT).show()
 
         XposedHelpers.findAndHookMethod("android.app.Instrumentation", lpparam.classLoader, "callApplicationOnCreate",
             Application::class.java, object : XC_MethodHook() {
