@@ -33,6 +33,28 @@ import kotlin.math.min
 
 
 class MainHook : IXposedHookLoadPackage {
+    // Xoay dữ liệu NV21 90 độ để chuyển landscape về portrait
+    fun rotateNV21(data: ByteArray, width: Int, height: Int): ByteArray {
+        val output = ByteArray(data.size)
+        var i = 0
+        for (x in 0 until width) {
+            for (y in height - 1 downTo 0) {
+                output[i++] = data[y * width + x]
+            }
+        }
+        val uvStart = width * height
+        val uvHeight = height / 2
+        val uvWidth = width / 2
+        for (x in 0 until uvWidth) {
+            for (y in uvHeight - 1 downTo 0) {
+                val index = uvStart + y * width + x * 2
+                output[i++] = data[index]
+                output[i++] = data[index + 1]
+            }
+        }
+        return output
+    }
+
     companion object {
         val TAG = "vcamsx"
         @Volatile
@@ -235,8 +257,8 @@ class MainHook : IXposedHookLoadPackage {
                         hw_decode_obj!!.decode( videoPathUri )
                         while ( data_buffer == null) {
                         }
-                        System.arraycopy(data_buffer, 0, paramd.args[0], 0, min(data_buffer.size.toDouble(), (paramd.args[0] as ByteArray).size.toDouble()).toInt())
-                    }
+                        val rotatedData = rotateNV21(data_buffer, mwidth, mhight)
+                        System.arraycopy(rotatedData, 0, paramd.args[0], 0, min(rotatedData.size, (paramd.args[0] as ByteArray).size))                    }
                 }
             })
     }
